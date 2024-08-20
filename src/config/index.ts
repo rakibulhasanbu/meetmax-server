@@ -15,4 +15,8 @@ export const config = {
   store_password: process.env.NEXT_PUBLIC_SSL_STORE_PASS,
   client_url: process.env.NEXT_PUBLIC_APP_URL,
   server_url: process.env.NEXT_PUBLIC_SERVER_URL,
+  emailSender: {
+    email: process.env.EMAIL,
+    app_pass: process.env.APP_PASS,
+  },
 };

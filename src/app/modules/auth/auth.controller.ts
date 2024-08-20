@@ -11,7 +11,7 @@ const registerUser = CatchAsyncError(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,
-    message: "Send token successfully",
+    message: "Confirmation email sent!",
     data: result,
   });
 });

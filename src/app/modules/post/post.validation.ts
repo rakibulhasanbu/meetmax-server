@@ -2,13 +2,19 @@ import { z } from "zod";
 
 const createPostSchema = z.object({
   body: z.object({
-    name: z.string(),
+    postBy: z.object({
+      userId: z.string(),
+      name: z.string(),
+      image: z.string().url(),
+    }),
     description: z.string(),
-    images: z.array(
-      z.object({
-        url: z.string().url(),
-      }),
-    ),
+    images: z
+      .array(
+        z.object({
+          url: z.string().url(),
+        }),
+      )
+      .optional(),
     isPublish: z.boolean().optional().default(false),
     liked: z.number().int().optional().default(0),
     comments: z.any().optional(),

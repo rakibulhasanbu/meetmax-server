@@ -3,106 +3,37 @@ import ApiError from "../../../errors/ApiError";
 import prisma from "../../../utils/prisma";
 
 const createPostIntoBD = async (payload: TPost) => {
-  // const {
-  //   demoUrl,
-  //   description,
-  //   name,
-  //   batchNo = 1,
-  //   price,
-  //   schedule,
-  //   thumbnail,
-  //   offerPrice = 0,
-  //   isPremium = true,
-  //   purchased = 0,
-  // } = payload;
-  // const slug = name
-  //   .replace(/[^a-zA-Z0-9]/g, " ")
-  //   .replace(/\s+/g, "-")
-  //   .trim()
-  //   .toLowerCase();
-  // const alreadyHaveSlug = await prisma.post.findUnique({
-  //   where: {
-  //     slug,
-  //   },
-  // });
-  // if (alreadyHaveSlug) {
-  //   throw new ApiError(httpStatus.FORBIDDEN, "Post name not unique!");
-  // }
-  // return await prisma.$transaction(async (prisma) => {
-  //   try {
-  //     const createPost = await prisma.post.create({
-  //       data: {
-  //         demoUrl,
-  //         description,
-  //         name,
-  //         batchNo,
-  //         price,
-  //         slug,
-  //         thumbnail,
-  //         offerPrice,
-  //         schedule,
-  //         isPremium,
-  //         purchased,
-  //       },
-  //       select: {
-  //         slug: true,
-  //         batchNo: true,
-  //         isPremium: true,
-  //         purchased: true,
-  //         schedule: true,
-  //         thumbnail: true,
-  //         offerPrice: true,
-  //         name: true,
-  //         description: true,
-  //         demoUrl: true,
-  //       },
-  //     });
-  //     const alreadyHavePostContent = await prisma.postContent.findFirst({
-  //       where: {
-  //         postSlug: slug,
-  //         batchNo,
-  //       },
-  //     });
-  //     if (alreadyHavePostContent) {
-  //       throw new ApiError(
-  //         httpStatus.FORBIDDEN,
-  //         "Post content already exists."
-  //       );
-  //     }
-  //     await prisma.postContent.create({
-  //       data: {
-  //         postSlug: slug,
-  //         batchNo,
-  //       },
-  //     });
-  //     return createPost;
-  //   } catch (error) {
-  //     throw new ApiError(httpStatus.BAD_REQUEST, "Post creation failed");
-  //   }
-  // });
+  const { postBy, description, images } = payload;
+
+  const createPost = await prisma.post.create({
+    data: {
+      postBy,
+      description,
+    },
+    select: {
+      images: true,
+      postBy: true,
+      description: true,
+    },
+  });
+
+  if (!createPost) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Post create unsuccessful!");
+  }
+
+  return createPost;
 };
 
 const getPostsFromDB = async (query: any) => {
   const {} = query;
 
-  // const posts = await prisma.post.findMany({
-  //   where: {
-  //     isPremium: true,
-  //   },
-  //   select: {
-  //     slug: true,
-  //     name: true,
-  //     batchNo: true,
-  //     description: true,
-  //     thumbnail: true,
-  //     price: true,
-  //     offerPrice: true,
-  //     isPremium: true,
-  //     purchased: true,
-  //   },
-  // });
+  const posts = await prisma.post.findMany({
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
 
-  // return posts;
+  return posts;
 };
 
 const UpdatePostBySlugIntoDB = async (slug: string, payload: TPost) => {

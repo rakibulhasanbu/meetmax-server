@@ -2,11 +2,13 @@ import { Request, Response } from "express";
 import { PostService } from "./post.service";
 import { CatchAsyncError } from "../../../utils/CatchAsyncError";
 import sendResponse from "../../../utils/sendResponse";
+import httpStatus from "http-status";
 
 const createPost = CatchAsyncError(async (req: Request, res: Response) => {
   const result = await PostService.createPostIntoBD(req.body);
+
   sendResponse(res, {
-    statusCode: 201,
+    statusCode: httpStatus.CREATED,
     success: true,
     message: "Post created successfully",
     data: result,

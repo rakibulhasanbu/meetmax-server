@@ -11,6 +11,10 @@ const registerSchema = z.object({
     password: z.string().min(6, {
       message: "Password must be at least 6 characters long.",
     }),
+    dateOfBirth: z.string({
+      message: "Date of birth is required",
+    }),
+    gender: z.enum(["male", "female"]),
   }),
 });
 
@@ -55,7 +59,7 @@ const newPasswordSchema = z.object({
     password: z.string().min(6, {
       message: "Minimum of 6 characters required",
     }),
-    token: z.string().min(6).optional(),
+    token: z.string().min(6),
   }),
 });
 

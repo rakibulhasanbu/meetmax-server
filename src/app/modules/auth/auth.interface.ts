@@ -9,7 +9,6 @@ export type IUser = { name?: string; email: string };
 
 export interface TUser {
   id: string;
-  role: string;
   email: string;
   name: string;
 }

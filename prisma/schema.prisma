@@ -9,8 +9,8 @@ datasource db {
 }
 
 enum Gender {
-  Male
-  Female
+  male
+  female
 }
 
 model User {
@@ -23,8 +23,10 @@ model User {
   accounts           Account[]
   isTwoFactorEnabled Boolean   @default(false)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  gender      Gender   @default(male)
+  dateOfBirth String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   image         String?
   profile       UserProfile?
@@ -71,7 +73,7 @@ model PasswordResetToken {
 model UserProfile {
   id                String  @id @default(auto()) @map("_id") @db.ObjectId
   phoneNo           String
-  gender            Gender? @default(Male)
+  gender            Gender? @default(male)
   yearsOfExperience String?
   country           String?
   district          String?
@@ -86,14 +88,16 @@ model UserProfile {
 
 model Post {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  slug        String?   @unique
+  postBy      Json
   description String
   images      Image[]
   isPublish   Boolean?  @default(false)
   liked       Int?      @default(0)
   comments    Json?
   visibleBy   VisibleBy @default(Public)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("posts")
 }

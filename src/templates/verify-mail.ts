@@ -1,7 +1,8 @@
+export const html = (name: string, code: string) => `
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Hablu-Programmer Activation Email</title>
+    <title>Meetmax Activation Email</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style type="text/css">
@@ -26,6 +27,9 @@
         line-height: 1.25;
         margin-top: 0;
         margin-bottom: 15px;
+        text-align: center;
+      }
+      h2{
         text-align: center;
       }
       p {
@@ -70,18 +74,18 @@
   <body>
     <div class="email-wrapper">
       <div class="email-header">
-        <h1>Welcome to Hablu-Programmer</h1>
+        <h1>Welcome to Meetmax</h1>
       </div>
       <div class="email-body">
-        <p>Hello <%= user.name %>,</p>
-        <p>Thank you for registering with Hablu Programmer. To activate your account, please use the following activation code:</p>
-        <h2><%= code %></h2>
+        <p>Hello ${name},</p>
+        <p>Thank you for registering with Meetmax. To activate your account, please use the following activation code:</p>
+        <h2>${code}</h2>
         <p>Please enter this code on the activation page within the next 5 minutes.</p>
-        <p>If you did not register for a Hablu Programmer account, please ignore this email.</p>
+        <p>If you did not register for a Meetmax account, please ignore this email.</p>
       </div>
       <div class="email-footer">
-        <p>If you have any questions, please don't hesitate to contact us at <a href="mailto:support@hablu-programmer.com">support@hablu-programmer.com</a></p>
+        <p>If you have any questions, please don't hesitate to contact us at <a href="mailto:support@meetmax.com">support@meetmax.com</a></p>
       </div>
     </div>
   </body>
-</html>
+</html>`;

@@ -10,11 +10,11 @@ import { EmailOptions, IUser } from "./auth.interface";
 import ejs from "ejs";
 import nodemailer, { Transporter } from "nodemailer";
 import path from "path";
-import { generateUserId } from "../../../utils/generateUserId";
-import { UserRoles } from "../../../../prisma/generated/client";
+import emailSender from "../../../helpers/emailSender";
+import { html } from "../../../templates/verify-mail";
 
 const registerUserIntoBD = async (payload: any) => {
-  const { name, email, password } = payload;
+  const { name, email, password, gender, dateOfBirth } = payload;
 
   const existingUserEmail = await prisma.user.findUnique({
     where: { email },
@@ -25,28 +25,35 @@ const registerUserIntoBD = async (payload: any) => {
     //   httpStatus.NOT_FOUND,
     //   "This Email already have an account.",
     // );
-    return existingUserEmail;
+    const { password: _, ...user } = existingUserEmail;
+    return user;
   }
 
   // Hash password
   const hashedPassword = await bcrypt.hash(password, 10);
-
-  await prisma.user.create({
+  const image =
+    gender === "male"
+      ? "https://cdn-icons-png.flaticon.com/512/5556/5556499.png"
+      : "https://cdn-icons-png.flaticon.com/512/6833/6833591.png";
+  const newUser = await prisma.user.create({
     data: {
       name,
       email,
       password: hashedPassword,
       isBlocked: true,
+      gender,
+      dateOfBirth,
+      image,
     },
   });
 
-  const sendEmail = await AuthServices.sendVerificationEmail({ name, email });
+  const verificationToken = await generateVerificationToken(email);
 
-  if (!sendEmail) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Send Email failed");
-  }
+  const subject = "Verify user code";
 
-  return { success: "Confirmation email sent!" };
+  await emailSender(subject, email, html(name, verificationToken.token));
+  const { password: _, ...user } = newUser;
+  return user;
 };
 
 const resendOTPFromDB = async (payload: any) => {
@@ -57,9 +64,15 @@ const resendOTPFromDB = async (payload: any) => {
     throw new ApiError(httpStatus.NOT_FOUND, "Email not found!");
   }
 
-  const resendToken = await AuthServices.sendVerificationEmail({ email });
+  // const resendToken = await AuthServices.sendVerificationEmail({ email });
+  const verificationToken = await generateVerificationToken(email);
+  await emailSender(
+    "Please Verify your Email!",
+    email,
+    html("User", verificationToken.token),
+  );
 
-  return resendToken;
+  // return resendToken;
 };
 
 const verifyUserIntoDB = async (payload: { token: string }) => {
@@ -74,7 +87,10 @@ const verifyUserIntoDB = async (payload: { token: string }) => {
   const hasExpired = new Date(existingToken.expires) < new Date();
 
   if (hasExpired) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, "Token has expired!");
+    throw new ApiError(
+      httpStatus.UNAUTHORIZED,
+      "Token has expired, resend code and give code again!",
+    );
   }
 
   const existingUser = await prisma.user.findUnique({
@@ -101,8 +117,8 @@ const verifyUserIntoDB = async (payload: { token: string }) => {
   return { success: "Email verified!" };
 };
 
-const loginUserIntoDB = async (payload: any, callbackUrl?: string | null) => {
-  const { email, password, code } = payload;
+const loginUserIntoDB = async (payload: any) => {
+  const { email, password } = payload;
 
   const existingUser = await prisma.user.findFirst({
     where: {
@@ -115,57 +131,19 @@ const loginUserIntoDB = async (payload: any, callbackUrl?: string | null) => {
   }
 
   if (!existingUser.emailVerified) {
-    await sendVerificationEmail({ email });
+    const verificationToken = await generateVerificationToken(email);
+
+    const subject = "Verify user code";
+
+    await emailSender(
+      subject,
+      email,
+      html(existingUser.name, verificationToken.token),
+    );
 
     return {
       success: "Verification email sent!",
     };
-  }
-
-  // TFA
-  if (existingUser.isTwoFactorEnabled && existingUser.email) {
-    if (code) {
-      const twoFactorToken = await getTwoFactorTokenByEmail(existingUser.email);
-
-      if (!twoFactorToken) {
-        throw new ApiError(httpStatus.NOT_FOUND, "Invalid code!");
-      }
-
-      if (twoFactorToken.token !== code) {
-        throw new ApiError(httpStatus.NOT_FOUND, "Invalid code!");
-      }
-
-      const hasExpired = new Date(twoFactorToken.expires) < new Date();
-
-      if (hasExpired) {
-        throw new ApiError(httpStatus.FORBIDDEN, "Code expired!");
-      }
-
-      await prisma.twoFactorToken.delete({
-        where: { id: twoFactorToken.id },
-      });
-
-      const existingConfirmation = await getTwoFactorConfirmationByUserId(
-        existingUser.id,
-      );
-
-      if (existingConfirmation) {
-        await prisma.twoFactorConfirmation.delete({
-          where: { id: existingConfirmation.id },
-        });
-      }
-
-      await prisma.twoFactorConfirmation.create({
-        data: {
-          userId: existingUser.id,
-        },
-      });
-    } else {
-      // const twoFactorToken = await generateTwoFactorToken(existingUser.email);
-      // await sendTwoFactorTokenEmail(twoFactorToken.email, twoFactorToken.token);
-
-      return { twoFactor: true };
-    }
   }
 
   const isCorrectPassword: boolean = await bcrypt.compare(
@@ -182,7 +160,6 @@ const loginUserIntoDB = async (payload: any, callbackUrl?: string | null) => {
       id: existingUser.id,
       name: existingUser.name,
       email: existingUser.email,
-      role: existingUser.role,
     },
     config.jwt_access_secret as Secret,
     config.jwt_expires_in as string,
@@ -190,7 +167,7 @@ const loginUserIntoDB = async (payload: any, callbackUrl?: string | null) => {
 
   const { password: _, ...user } = existingUser;
 
-  return accessToken;
+  return { user, accessToken };
 
   // await signIn("credentials", {
   //   email,
@@ -202,14 +179,11 @@ const loginUserIntoDB = async (payload: any, callbackUrl?: string | null) => {
 const forgotPassword = async ({ email }: { email: string }) => {
   const verificationToken = await generatePasswordResetToken(email);
 
-  const data = { code: verificationToken.token };
-
-  await sendMail({
-    email: email,
-    subject: "🔔 Reset your password! 🔐",
-    template: "reset-mail.ejs",
-    data,
-  });
+  await emailSender(
+    "Reset your password!",
+    email,
+    html("User", verificationToken.token),
+  );
 };
 
 const newPassword = async ({
@@ -316,7 +290,6 @@ const getAllUsersFromDB = async () => {
       id: true,
       email: true,
       isBlocked: true,
-      role: true,
     },
   });
 
@@ -352,7 +325,7 @@ const updateUserIntoDB = async (payload: any) => {
 
 const getUsersByRoleFromDB = async (role: any) => {
   const users = await prisma.user.findMany({
-    where: { role, isBlocked: true },
+    where: { isBlocked: true },
   });
 
   if (!users) {
@@ -481,32 +454,6 @@ const getPasswordResetTokenByEmail = async (email: string) => {
     });
 
     return passwordResetToken;
-  } catch {
-    return null;
-  }
-};
-
-const getTwoFactorTokenByEmail = async (email: string) => {
-  try {
-    const twoFactorToken = await prisma.twoFactorToken.findFirst({
-      where: { email },
-    });
-
-    return twoFactorToken;
-  } catch {
-    return null;
-  }
-};
-
-const getTwoFactorConfirmationByUserId = async (userId: string) => {
-  try {
-    const twoFactorConfirmation = await prisma.twoFactorConfirmation.findUnique(
-      {
-        where: { userId },
-      },
-    );
-
-    return twoFactorConfirmation;
   } catch {
     return null;
   }

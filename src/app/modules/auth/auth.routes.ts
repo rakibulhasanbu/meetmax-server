@@ -12,21 +12,15 @@ router.post(
 );
 
 router.post(
-  "/resend-otp",
-  validateRequest(AuthValidationSchemas.resendOtpSchema),
-  AuthController.resendOtp,
-);
-
-router.post(
-  "/verify-user",
-  validateRequest(AuthValidationSchemas.tokenSchema),
-  AuthController.verifiedUser,
-);
-
-router.post(
-  "/login",
+  "/signin",
   validateRequest(AuthValidationSchemas.LoginSchema),
   AuthController.loginUser,
+);
+
+router.post(
+  "/verify-signup-token",
+  validateRequest(AuthValidationSchemas.tokenSchema),
+  AuthController.verifiedUser,
 );
 
 router.post(
