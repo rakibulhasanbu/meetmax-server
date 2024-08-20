@@ -15,6 +15,28 @@ const createPost = CatchAsyncError(async (req: Request, res: Response) => {
   });
 });
 
+const createComment = CatchAsyncError(async (req: Request, res: Response) => {
+  const result = await PostService.createCommentIntoBD(req.body);
+
+  sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    success: true,
+    message: "Commented successfully",
+    data: result,
+  });
+});
+
+const uploadImage = CatchAsyncError(async (req: Request, res: Response) => {
+  const result = await PostService.uploadImageIntoBD(req.body);
+
+  sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    success: true,
+    message: "Upload image successfully",
+    data: result,
+  });
+});
+
 const getPosts = CatchAsyncError(async (req: Request, res: Response) => {
   const result = await PostService.getPostsFromDB(req.query);
 
@@ -56,7 +78,9 @@ const deletePostBySlug = CatchAsyncError(
 
 export const PostController = {
   createPost,
+  createComment,
   getPosts,
   updatePostBySlug,
   deletePostBySlug,
+  uploadImage,
 };

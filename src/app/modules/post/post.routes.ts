@@ -14,6 +14,20 @@ router.post(
   PostController.createPost,
 );
 
+router.post(
+  "/comment",
+  auth(),
+  validateRequest(PostValidationSchemas.createCommentSchema),
+  PostController.createComment,
+);
+
+router.post(
+  "/upload-image",
+  auth(),
+  validateRequest(PostValidationSchemas.uploadImage),
+  PostController.uploadImage,
+);
+
 router.get("/posts", auth(), PostController.getPosts);
 
 router.put(

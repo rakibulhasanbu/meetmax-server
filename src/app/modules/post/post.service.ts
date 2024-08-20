@@ -1,19 +1,25 @@
 import httpStatus from "http-status";
 import ApiError from "../../../errors/ApiError";
 import prisma from "../../../utils/prisma";
+import cloudinary from "cloudinary";
 
 const createPostIntoBD = async (payload: TPost) => {
   const { postBy, description, images } = payload;
+
+  const share = Math.floor(Math.random() * 99) + 1;
 
   const createPost = await prisma.post.create({
     data: {
       postBy,
       description,
+      share,
+      images,
     },
     select: {
       images: true,
       postBy: true,
       description: true,
+      createdAt: true,
     },
   });
 
@@ -24,12 +30,56 @@ const createPostIntoBD = async (payload: TPost) => {
   return createPost;
 };
 
+const createCommentIntoBD = async (payload: any) => {
+  const { commentBy, text, postId } = payload;
+
+  const createComment = await prisma.comment.create({
+    data: {
+      commentBy,
+      text,
+      postId,
+    },
+  });
+
+  if (!createComment) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Comment create unsuccessful!");
+  }
+
+  return createComment;
+};
+
+const uploadImageIntoBD = async (payload: any) => {
+  const { img } = payload;
+
+  const myCloud = await cloudinary.v2.uploader.upload(img, {
+    folder: "profile_img",
+  });
+
+  if (!myCloud.secure_url) {
+    throw new ApiError(400, "Failed to update profile!");
+  }
+
+  return {
+    url: myCloud.url,
+  };
+};
+
 const getPostsFromDB = async (query: any) => {
   const {} = query;
 
   const posts = await prisma.post.findMany({
     orderBy: {
       createdAt: "desc",
+    },
+    select: {
+      id: true,
+      postBy: true,
+      description: true,
+      createdAt: true,
+      comments: true,
+      images: true,
+      liked: true,
+      share: true,
     },
   });
 
@@ -166,7 +216,9 @@ const deletePostBySlugIntoDB = async (payload: any) => {
 
 export const PostService = {
   createPostIntoBD,
+  createCommentIntoBD,
   getPostsFromDB,
   UpdatePostBySlugIntoDB,
   deletePostBySlugIntoDB,
+  uploadImageIntoBD,
 };

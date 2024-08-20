@@ -90,10 +90,11 @@ model Post {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
   postBy      Json
   description String
-  images      Image[]
+  images      Json
   isPublish   Boolean?  @default(false)
   liked       Int?      @default(0)
-  comments    Json?
+  share       Int?      @default(0)
+  comments    Comment[]
   visibleBy   VisibleBy @default(Public)
 
   createdAt DateTime @default(now())
@@ -102,14 +103,19 @@ model Post {
   @@map("posts")
 }
 
-model Image {
-  id  String @id @default(auto()) @map("_id") @db.ObjectId
-  url String
+model Comment {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  text      String
+  commentBy Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   postId String @db.ObjectId
-  post   Post   @relation(fields: [postId], references: [id])
+  Post   Post   @relation(fields: [postId], references: [id])
 
-  @@map("images")
+  @@map("comments")
 }
 
 enum VisibleBy {

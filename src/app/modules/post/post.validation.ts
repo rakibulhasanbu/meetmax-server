@@ -22,6 +22,24 @@ const createPostSchema = z.object({
   }),
 });
 
+const createCommentSchema = z.object({
+  body: z.object({
+    commentBy: z.object({
+      userId: z.string(),
+      name: z.string(),
+      image: z.string().url(),
+    }),
+    text: z.string(),
+    postId: z.string(),
+  }),
+});
+
+const uploadImage = z.object({
+  body: z.object({
+    img: z.string(),
+  }),
+});
+
 const updatePostSchema = z.object({
   name: z.string().optional(),
   slug: z.string().optional(),
@@ -41,5 +59,7 @@ const updatePostSchema = z.object({
 
 export const PostValidationSchemas = {
   createPostSchema,
+  createCommentSchema,
   updatePostSchema,
+  uploadImage,
 };
