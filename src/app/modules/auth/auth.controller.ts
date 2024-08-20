@@ -134,6 +134,19 @@ const updateUser = CatchAsyncError(async (req: Request, res: Response) => {
   });
 });
 
+const googleAuthRegisterUser = CatchAsyncError(
+  async (req: Request, res: Response) => {
+    const result = await AuthServices.registerAuthUserIntoDB(req.body);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: 201,
+      message: "Login with google account successful.",
+      data: result,
+    });
+  },
+);
+
 export const AuthController = {
   loginUser,
   changePassword,
@@ -146,4 +159,5 @@ export const AuthController = {
   registerUser,
   forgotPassword,
   newPassword,
+  googleAuthRegisterUser,
 };

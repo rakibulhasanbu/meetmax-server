@@ -105,6 +105,12 @@ const userProfileSchema = z.object({
   }),
 });
 
+const googleAuthValidation = z.object({
+  body: z.object({
+    accessToken: z.string(),
+  }),
+});
+
 export const AuthValidationSchemas = {
   LoginSchema,
   changePasswordSchema,
@@ -116,4 +122,5 @@ export const AuthValidationSchemas = {
   registerSchema,
   forgotPasswordSchema,
   newPasswordSchema,
+  googleAuthValidation,
 };

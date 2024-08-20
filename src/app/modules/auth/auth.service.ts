@@ -12,6 +12,7 @@ import nodemailer, { Transporter } from "nodemailer";
 import path from "path";
 import emailSender from "../../../helpers/emailSender";
 import { html } from "../../../templates/verify-mail";
+import { getAuth } from "firebase-admin/auth";
 
 const registerUserIntoBD = async (payload: any) => {
   const { name, email, password, gender, dateOfBirth } = payload;
@@ -35,6 +36,7 @@ const registerUserIntoBD = async (payload: any) => {
     gender === "male"
       ? "https://cdn-icons-png.flaticon.com/512/5556/5556499.png"
       : "https://cdn-icons-png.flaticon.com/512/6833/6833591.png";
+
   const newUser = await prisma.user.create({
     data: {
       name,
@@ -236,41 +238,34 @@ const changePassword = async (payload: {
   currentPassword: string;
   newPassword: string;
 }) => {
-  const userData = await prisma.user.findUniqueOrThrow({
-    where: {
-      email: payload.email,
-    },
-  });
-
-  if (!userData) {
-    throw new ApiError(httpStatus.NOT_FOUND, "User dose not exist");
-  }
-
-  const isCorrectPassword: boolean = await bcrypt.compare(
-    payload.currentPassword,
-    userData.password,
-  );
-
-  if (!isCorrectPassword) {
-    throw new ApiError(httpStatus.NOT_ACCEPTABLE, "Your Password incorrect!");
-  }
-
-  const hashedPassword: string = await bcrypt.hash(payload.newPassword, 10);
-
-  await prisma.user.update({
-    where: {
-      email: userData.email,
-    },
-    data: {
-      password: hashedPassword,
-    },
-  });
-
-  const { password: _, ...user } = userData;
-
-  return {
-    user,
-  };
+  // const userData = await prisma.user.findUniqueOrThrow({
+  //   where: {
+  //     email: payload.email,
+  //   },
+  // });
+  // if (!userData) {
+  //   throw new ApiError(httpStatus.NOT_FOUND, "User dose not exist");
+  // }
+  // const isCorrectPassword: boolean = await bcrypt.compare(
+  //   payload.currentPassword,
+  //   userData.password,
+  // );
+  // if (!isCorrectPassword) {
+  //   throw new ApiError(httpStatus.NOT_ACCEPTABLE, "Your Password incorrect!");
+  // }
+  // const hashedPassword: string = await bcrypt.hash(payload.newPassword, 10);
+  // await prisma.user.update({
+  //   where: {
+  //     email: userData.email,
+  //   },
+  //   data: {
+  //     password: hashedPassword,
+  //   },
+  // });
+  // const { password: _, ...user } = userData;
+  // return {
+  //   user,
+  // };
 };
 
 const getProfileFromDB = async (user: any) => {
@@ -459,6 +454,63 @@ const getPasswordResetTokenByEmail = async (email: string) => {
   }
 };
 
+const registerAuthUserIntoDB = async ({
+  accessToken,
+}: {
+  accessToken: string;
+}) => {
+  return await getAuth()
+    .verifyIdToken(accessToken)
+    .then(async (decodedUser) => {
+      const picture = decodedUser?.picture?.replace("s96-c", "s384-c");
+
+      let existOrNotUser = await prisma.user.findFirst({
+        where: {
+          email: decodedUser?.email,
+        },
+      });
+
+      if (existOrNotUser) {
+        const accessToken = jwtHelpers.generateToken(
+          {
+            id: existOrNotUser.id,
+            name: existOrNotUser.name,
+            email: existOrNotUser.email,
+          },
+          config.jwt_access_secret as Secret,
+          config.jwt_expires_in as string,
+        );
+
+        const { password: _, ...user } = existOrNotUser;
+
+        return { user, accessToken };
+      } else {
+        existOrNotUser = await prisma.user.create({
+          data: {
+            name: decodedUser?.name,
+            email: decodedUser.email as string,
+            isBlocked: false,
+            image: picture,
+          },
+        });
+      }
+
+      const accessToken = jwtHelpers.generateToken(
+        {
+          id: existOrNotUser.id,
+          name: existOrNotUser.name,
+          email: existOrNotUser.email,
+        },
+        config.jwt_access_secret as Secret,
+        config.jwt_expires_in as string,
+      );
+
+      const { password: _, ...user } = existOrNotUser;
+
+      return { user, accessToken };
+    });
+};
+
 export const AuthServices = {
   loginUserIntoDB,
   changePassword,
@@ -475,4 +527,5 @@ export const AuthServices = {
   verifyUserIntoDB,
   forgotPassword,
   newPassword,
+  registerAuthUserIntoDB,
 };

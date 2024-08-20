@@ -3,6 +3,8 @@ import cors from "cors";
 import httpStatus from "http-status";
 import routes from "./routes";
 import globalErrorHandler from "./middlewares/globalErrorHandler";
+import admin from "firebase-admin";
+import { config } from "../config";
 
 const app: Application = express();
 app.use(
@@ -14,6 +16,11 @@ app.use(
 
 app.options("*", cors());
 
+//google config
+admin.initializeApp({
+  credential: admin.credential.cert(config.firebase as admin.ServiceAccount),
+});
+
 //parser
 // Adjust the payload size limit here
 app.use(express.json({ limit: "4mb" }));
@@ -22,7 +29,7 @@ app.use(express.urlencoded({ limit: "4mb", extended: true }));
 app.get("/", (req: Request, res: Response) => {
   res.send({
     success: true,
-    message: "e commerce app server is running perfectly",
+    message: "Meetmax server app server is running perfectly",
   });
 });
 

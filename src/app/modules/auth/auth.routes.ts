@@ -41,6 +41,12 @@ router.post(
   AuthController.changePassword,
 );
 
+router.post(
+  "/google-auth",
+  validateRequest(AuthValidationSchemas.googleAuthValidation),
+  AuthController.googleAuthRegisterUser,
+);
+
 router.get("/users", AuthController.getUsers);
 
 export const AuthRoutes = router;
