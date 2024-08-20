@@ -1,0 +1,52 @@
+{
+  "name": "hp-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node ./dist/server.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint src --ignore-path .eslintignore --ext .js,.ts",
+    "postinstall": "prisma generate",
+    "deploy": "npx prisma generate && tsc && vercel --prod"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@eslint/js": "^9.8.0",
+    "@types/bcrypt": "^5.0.2",
+    "@types/cors": "^2.8.17",
+    "@types/ejs": "^3.1.5",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/node": "^20.12.12",
+    "@types/nodemailer": "^6.4.15",
+    "@typescript-eslint/eslint-plugin": "^8.0.1",
+    "@typescript-eslint/parser": "^8.0.1",
+    "eslint": "^9.8.0",
+    "eslint-config-prettier": "^9.1.0",
+    "globals": "^15.9.0",
+    "prettier": "^3.3.3",
+    "prisma": "^5.18.0",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.4.5",
+    "typescript-eslint": "^8.0.1"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.18.0",
+    "bcrypt": "^5.1.1",
+    "cloudinary": "^2.3.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "http-status": "^1.7.4",
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^6.9.14",
+    "sslcommerz-lts": "^1.1.0",
+    "zod": "^3.23.8"
+  }
+}
